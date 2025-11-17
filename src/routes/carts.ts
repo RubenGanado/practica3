@@ -25,10 +25,21 @@ router.put('/cart/add', async (req: AuthRequest, res) => {
         if (!product) return res.status(404).json({ message: "Product not found" });
         if (product.stock < quantity) return res.status(400).json({ message: "Insufficient stock" });
 
-        let cart = await cartsCollection.findOne({ userId: new ObjectId(userId) });
-        if (!cart) {
+        let cart = await cartsCollection.findOne({ userId: new ObjectId((String(userId))) });
+        /*if (!cart) {
             return res.status(404).json({ message: "Carrito no encontrado" });
         }
+        */
+        if (!cart) {
+            // Crear carrito nuevo si no existe
+            const newCart = {
+                userId: new ObjectId(userId),
+                items: []
+            };
+            const result = await cartsCollection.insertOne(newCart);
+            cart = { ...newCart, _id: result.insertedId };
+        }
+
 
         const existingItem = cart.items.find(
             i => i.productId.toString() === productId
